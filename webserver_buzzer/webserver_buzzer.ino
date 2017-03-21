@@ -42,11 +42,27 @@ String response;
 
 //gpio connections
 //huzzah onboard led
-const int LED = 14;
+const int output = 14;
+const int outneg = 12;
 
 //deep sleep time
 //  in seconds
-const int sleepTimeS = 10;
+const int sleepTimeS = 30;
+
+
+//plays 10,000kHz square wave for 1s
+void playbuzz()
+{
+  for(int i = 0; i <= 10000; i++)
+  {
+    digitalWrite(output, HIGH);
+    digitalWrite(outneg, LOW);
+    delayMicroseconds(50);
+    digitalWrite(output, LOW);
+    digitalWrite(outneg, HIGH);
+    delayMicroseconds(50);
+  }
+}
 
 void setup() {
   pinMode(0, OUTPUT);
@@ -56,21 +72,25 @@ void setup() {
   Serial.begin(9600);
   //Serial.println("setup");
 
-  //setup output
-  pinMode(LED, OUTPUT);
-  digitalWrite(LED, LOW);
+  //setup outputs
+  pinMode(output, OUTPUT);
+  pinMode(outneg, OUTPUT);
+  digitalWrite(output,LOW);
+  digitalWrite(output, LOW);
 
   //connecting to WiFi
   WiFi.begin(ssid,pswd);
   while(WiFi.status() != WL_CONNECTED)
   {
+    /*
     //Serial.println("connection failed");
     digitalWrite(0, LOW);
     delay(100);
     digitalWrite(0, HIGH);
+    */
     delay(100);
+    
   }
-
 
   //main code
   //connects to server
@@ -94,26 +114,28 @@ void setup() {
     //when done close the connection
     //Serial.println("disconnected from server");
     client.stop();
-
+    //Serial.println(response);
     //gets last line from response
-    response = response.substring(response.lastIndexOf('\n')+1,response.length());
+    response = response.substring(response.length()-2,response.length());
 
+    //Serial.println(response);
+    
     if(response == "on")
     {
-      digitalWrite(LED, HIGH);
+      //plays sound 10 times w second gap between
+      for(int i = 0; i < 10; i++)
+      {
+        playbuzz();
+        delay(1000);
+      }
     }
     else
     {
-      digitalWrite(LED, LOW);
       ESP.deepSleep(sleepTimeS * 1000000);
     }
-     
-    //Serial.println(response);
+
     //reset response for next read
     response = "";
-
-    //time between reads
-    delay(1000);
   }
   ESP.deepSleep(sleepTimeS *1000000);
   //Serial.println("did not connect");
